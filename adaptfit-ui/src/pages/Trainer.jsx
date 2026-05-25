@@ -1,20 +1,15 @@
 import { useState } from 'react'
-import { Zap, Clock, Flame, ChevronRight, Loader } from 'lucide-react'
+import { Zap, Clock, Flame, Loader, AlertTriangle, X } from 'lucide-react'
 
 const API = localStorage.getItem('adaptfit_url') || 'http://localhost:8080'
-
 const GOALS = ['FAT_LOSS', 'MUSCLE_GAIN', 'ENDURANCE', 'FLEXIBILITY', 'GENERAL_FITNESS']
 const EQUIPMENT = ['NONE', 'DUMBBELLS', 'JUMP_ROPE', 'RESISTANCE_BAND', 'KETTLEBELL']
+const MUSCLE_GROUPS = ['Chest', 'Back', 'Shoulders', 'Arms', 'Legs', 'Core', 'Full Body', 'Cardio']
 
 const LevelBtn = ({ label, active, onClick }) => (
-  <button
-    onClick={onClick}
-    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-      active
-        ? 'bg-green-500 text-black'
-        : 'bg-white/5 text-white/50 hover:bg-white/10 hover:text-white'
-    }`}
-  >
+  <button onClick={onClick}
+    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${active ? 'text-black' : 'bg-white/5 text-white/50 hover:bg-white/10 hover:text-white'}`}
+    style={active ? { background: 'linear-gradient(135deg, #22c55e, #16a34a)' } : {}}>
     {label}
   </button>
 )
@@ -25,20 +20,19 @@ export default function Trainer() {
   const [goal, setGoal] = useState('MUSCLE_GAIN')
   const [equipment, setEquipment] = useState(['NONE', 'DUMBBELLS'])
   const [time, setTime] = useState(35)
+  const [injuries, setInjuries] = useState([])
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
   const [error, setError] = useState('')
 
-  const toggleEquipment = (e) => {
-    setEquipment(prev =>
-      prev.includes(e) ? prev.filter(x => x !== e) : [...prev, e]
-    )
-  }
+  const toggleEquipment = (e) => setEquipment(prev =>
+    prev.includes(e) ? prev.filter(x => x !== e) : [...prev, e])
+
+  const toggleInjury = (muscle) => setInjuries(prev =>
+    prev.includes(muscle) ? prev.filter(x => x !== muscle) : [...prev, muscle])
 
   const generate = async () => {
-    setLoading(true)
-    setError('')
-    setResult(null)
+    setLoading(true); setError(''); setResult(null)
     try {
       const token = localStorage.getItem('adaptfit_token')
       const res = await fetch(`${API}/api/recommendations/workouts`, {
@@ -52,11 +46,13 @@ export default function Trainer() {
           recoveryLevel: recovery,
           goal,
           availableEquipment: equipment,
-          availableTimeMinutes: time
+          availableTimeMinutes: time,
+          injuredMuscleGroups: injuries
         })
       })
       const data = await res.json()
-      setResult(data)
+      if (data.message) setError(data.message)
+      else setResult(data)
     } catch (e) {
       setError('Could not connect to backend. Make sure it is running.')
     }
@@ -67,128 +63,149 @@ export default function Trainer() {
     <div className="p-8">
       <div className="mb-8">
         <p className="text-white/40 text-sm mb-1">Adaptive trainer</p>
-        <h1 className="text-3xl font-semibold">Generate workout</h1>
+        <h1 className="text-3xl font-semibold">Generate <span className="gradient-text">workout</span></h1>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Form */}
-        <div className="space-y-6">
-          {/* Energy */}
-          <div className="bg-[#111] border border-white/5 rounded-2xl p-6">
-            <p className="text-sm text-white/40 mb-3">Energy level</p>
+        <div className="space-y-4">
+          <div className="glow-card rounded-2xl p-5">
+            <p className="text-xs text-white/40 mb-3 uppercase tracking-wider">Energy level</p>
             <div className="flex gap-2">
-              {['LOW', 'MEDIUM', 'HIGH'].map(l => (
-                <LevelBtn key={l} label={l} active={energy === l} onClick={() => setEnergy(l)} />
-              ))}
+              {['LOW', 'MEDIUM', 'HIGH'].map(l => <LevelBtn key={l} label={l} active={energy === l} onClick={() => setEnergy(l)} />)}
             </div>
           </div>
 
-          {/* Recovery */}
-          <div className="bg-[#111] border border-white/5 rounded-2xl p-6">
-            <p className="text-sm text-white/40 mb-3">Recovery level</p>
+          <div className="glow-card rounded-2xl p-5">
+            <p className="text-xs text-white/40 mb-3 uppercase tracking-wider">Recovery level</p>
             <div className="flex gap-2">
-              {['LOW', 'MEDIUM', 'HIGH'].map(l => (
-                <LevelBtn key={l} label={l} active={recovery === l} onClick={() => setRecovery(l)} />
-              ))}
+              {['LOW', 'MEDIUM', 'HIGH'].map(l => <LevelBtn key={l} label={l} active={recovery === l} onClick={() => setRecovery(l)} />)}
             </div>
           </div>
 
-          {/* Goal */}
-          <div className="bg-[#111] border border-white/5 rounded-2xl p-6">
-            <p className="text-sm text-white/40 mb-3">Goal</p>
+          <div className="glow-card rounded-2xl p-5">
+            <p className="text-xs text-white/40 mb-3 uppercase tracking-wider">Goal</p>
             <div className="flex flex-wrap gap-2">
-              {GOALS.map(g => (
-                <LevelBtn key={g} label={g.replace('_', ' ')} active={goal === g} onClick={() => setGoal(g)} />
-              ))}
+              {GOALS.map(g => <LevelBtn key={g} label={g.replace(/_/g, ' ')} active={goal === g} onClick={() => setGoal(g)} />)}
             </div>
           </div>
 
-          {/* Equipment */}
-          <div className="bg-[#111] border border-white/5 rounded-2xl p-6">
-            <p className="text-sm text-white/40 mb-3">Equipment</p>
+          <div className="glow-card rounded-2xl p-5">
+            <p className="text-xs text-white/40 mb-3 uppercase tracking-wider">Equipment</p>
             <div className="flex flex-wrap gap-2">
-              {EQUIPMENT.map(e => (
-                <LevelBtn key={e} label={e.replace('_', ' ')} active={equipment.includes(e)} onClick={() => toggleEquipment(e)} />
-              ))}
+              {EQUIPMENT.map(e => <LevelBtn key={e} label={e.replace(/_/g, ' ')} active={equipment.includes(e)} onClick={() => toggleEquipment(e)} />)}
             </div>
           </div>
 
-          {/* Time */}
-          <div className="bg-[#111] border border-white/5 rounded-2xl p-6">
+          <div className="rounded-2xl p-5" style={{ background: '#111', border: '1px solid rgba(239,68,68,0.2)', boxShadow: '0 0 20px rgba(239,68,68,0.05)' }}>
+            <div className="flex items-center gap-2 mb-3">
+              <AlertTriangle size={14} className="text-red-400" />
+              <p className="text-xs text-white/40 uppercase tracking-wider">Injured areas <span className="text-white/20 normal-case">(optional)</span></p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {MUSCLE_GROUPS.map(muscle => (
+                <button key={muscle} onClick={() => toggleInjury(muscle)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${injuries.includes(muscle)
+                    ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                    : 'bg-white/5 text-white/40 hover:text-white hover:bg-white/10'}`}>
+                  {injuries.includes(muscle) ? '🚫 ' : ''}{muscle}
+                </button>
+              ))}
+            </div>
+            {injuries.length > 0 && (
+              <div className="mt-3 flex items-center gap-2">
+                <p className="text-xs text-red-400/70">Exercises targeting {injuries.join(', ')} will be excluded</p>
+                <button onClick={() => setInjuries([])} className="text-xs text-white/20 hover:text-white/50 flex items-center gap-1">
+                  <X size={10} /> Clear
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="glow-card rounded-2xl p-5">
             <div className="flex justify-between mb-3">
-              <p className="text-sm text-white/40">Available time</p>
+              <p className="text-xs text-white/40 uppercase tracking-wider">Available time</p>
               <p className="text-sm font-medium text-green-400">{time} min</p>
             </div>
-            <input
-              type="range" min="10" max="90" step="5"
-              value={time}
-              onChange={e => setTime(Number(e.target.value))}
-              className="w-full accent-green-500"
-            />
+            <input type="range" min="10" max="90" step="5" value={time}
+              onChange={e => setTime(Number(e.target.value))} className="w-full accent-green-500" />
+            <div className="flex justify-between text-xs text-white/20 mt-1">
+              <span>10 min</span><span>90 min</span>
+            </div>
           </div>
 
-          <button
-            onClick={generate}
-            disabled={loading}
-            className="w-full bg-green-500 hover:bg-green-400 disabled:opacity-50 text-black font-semibold py-4 rounded-2xl transition-colors flex items-center justify-center gap-2"
-          >
+          <button onClick={generate} disabled={loading}
+            className="w-full text-black font-semibold py-4 rounded-2xl transition-all flex items-center justify-center gap-2 pulse-glow shimmer disabled:opacity-50"
+            style={{ background: 'linear-gradient(135deg, #22c55e, #16a34a)' }}>
             {loading ? <Loader size={18} className="animate-spin" /> : <Zap size={18} />}
             {loading ? 'Generating...' : 'Generate workout'}
           </button>
 
-          {error && <p className="text-red-400 text-sm text-center">{error}</p>}
+          {error && (
+            <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
+              <p className="text-red-400 text-sm text-center">{error}</p>
+            </div>
+          )}
         </div>
 
-        {/* Result */}
         <div>
           {!result && !loading && (
-            <div className="bg-[#111] border border-white/5 rounded-2xl p-8 h-full flex flex-col items-center justify-center text-center">
-              <Zap size={40} className="text-white/10 mb-4" />
-              <p className="text-white/30 text-sm">Your workout will appear here</p>
+            <div className="glow-card rounded-2xl p-8 h-full flex flex-col items-center justify-center text-center">
+              <div className="float"><Zap size={48} className="text-green-500/20 mb-4" /></div>
+              <p className="text-white/20 text-sm">Your personalized workout will appear here</p>
+              {injuries.length > 0 && <p className="text-red-400/50 text-xs mt-2">🚫 Avoiding: {injuries.join(', ')}</p>}
             </div>
           )}
 
           {result && (
-            <div className="bg-[#111] border border-white/5 rounded-2xl p-6 space-y-5">
+            <div className="gradient-border rounded-2xl p-6 space-y-5">
               <div>
-                <span className="text-xs bg-green-500/10 text-green-400 px-3 py-1 rounded-full">
-                  {result.workoutType}
-                </span>
-                <h2 className="text-xl font-semibold mt-3">{result.recommendationName}</h2>
+                <div className="flex flex-wrap gap-2 mb-3">
+                  <span className="text-xs bg-green-500/10 text-green-400 px-3 py-1 rounded-full border border-green-500/20">{result.workoutType}</span>
+                  <span className="text-xs bg-blue-500/10 text-blue-400 px-3 py-1 rounded-full border border-blue-500/20">{result.goal?.replace(/_/g, ' ')}</span>
+                  {injuries.length > 0 && (
+                    <span className="text-xs bg-red-500/10 text-red-400 px-3 py-1 rounded-full border border-red-500/20">
+                      🚫 {injuries.length} area{injuries.length > 1 ? 's' : ''} avoided
+                    </span>
+                  )}
+                </div>
+                <h2 className="text-xl font-semibold">{result.recommendationName}</h2>
                 <p className="text-white/40 text-sm mt-2">{result.recommendationReason}</p>
               </div>
 
               <div className="grid grid-cols-3 gap-3">
-                <div className="bg-white/5 rounded-xl p-3 text-center">
-                  <Clock size={16} className="text-white/40 mx-auto mb-1" />
-                  <p className="font-semibold">{result.estimatedDurationMinutes}m</p>
-                  <p className="text-xs text-white/40">Duration</p>
-                </div>
-                <div className="bg-white/5 rounded-xl p-3 text-center">
-                  <Zap size={16} className="text-white/40 mx-auto mb-1" />
-                  <p className="font-semibold">{result.intensity}</p>
-                  <p className="text-xs text-white/40">Intensity</p>
-                </div>
-                <div className="bg-white/5 rounded-xl p-3 text-center">
-                  <Flame size={16} className="text-white/40 mx-auto mb-1" />
-                  <p className="font-semibold">{result.exercises?.length}</p>
-                  <p className="text-xs text-white/40">Exercises</p>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <p className="text-sm text-white/40 font-medium">Exercises</p>
-                {result.exercises?.map((ex, i) => (
-                  <div key={ex.id} className="bg-white/5 rounded-xl p-4 flex items-center gap-4">
-                    <div className="w-8 h-8 bg-green-500/10 text-green-400 rounded-lg flex items-center justify-center text-sm font-semibold">
-                      {i + 1}
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-medium text-sm">{ex.name}</p>
-                      <p className="text-xs text-white/40">{ex.muscleGroup} · {ex.durationMinutes}min · {ex.caloriesEstimate} cal</p>
-                    </div>
+                {[[Clock, `${result.estimatedDurationMinutes}m`, 'Duration'], [Zap, result.intensity, 'Intensity'], [Flame, result.exercises?.length, 'Exercises']].map(([Icon, val, label]) => (
+                  <div key={label} className="bg-white/5 rounded-xl p-3 text-center border border-white/5">
+                    <Icon size={16} className="text-white/40 mx-auto mb-1" />
+                    <p className="font-semibold">{val}</p>
+                    <p className="text-xs text-white/40">{label}</p>
                   </div>
                 ))}
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-xs text-white/40 uppercase tracking-wider">Exercises</p>
+                {result.exercises?.map((ex, i) => (
+                  <div key={ex.id} className="glow-card shimmer rounded-xl p-4 flex items-center gap-4">
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-semibold text-black flex-shrink-0"
+                      style={{ background: 'linear-gradient(135deg, #22c55e, #16a34a)' }}>{i + 1}</div>
+                    <div className="flex-1">
+                      <p className="font-medium text-sm">{ex.name}</p>
+                      <p className="text-xs text-white/40">{ex.muscleGroup} · {ex.equipment} · {ex.durationMinutes}min · {ex.caloriesEstimate} cal</p>
+                    </div>
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${ex.intensity === 'LOW' ? 'bg-green-500/10 text-green-400' : ex.intensity === 'MODERATE' ? 'bg-yellow-500/10 text-yellow-400' : 'bg-red-500/10 text-red-400'}`}>
+                      {ex.intensity}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              <div>
+                <p className="text-xs text-white/40 uppercase tracking-wider mb-2">Equipment used</p>
+                <div className="flex flex-wrap gap-2">
+                  {result.equipmentUsed?.map(eq => (
+                    <span key={eq} className="text-xs bg-white/5 border border-white/10 px-3 py-1 rounded-full text-white/50">{eq}</span>
+                  ))}
+                </div>
               </div>
             </div>
           )}
