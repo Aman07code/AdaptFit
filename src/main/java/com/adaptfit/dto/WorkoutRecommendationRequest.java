@@ -15,6 +15,7 @@ public record WorkoutRecommendationRequest(
         @NotNull WorkoutGoal goal,
         @NotNull List<String> availableEquipment,
         @Min(10) @Max(180) int availableTimeMinutes,
-        List<String> injuredMuscleGroups
+        List<String> injuredMuscleGroups,
+        List<String> targetMuscleGroups
 ) {
 }
