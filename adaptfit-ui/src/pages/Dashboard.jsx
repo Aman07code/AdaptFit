@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { motion } from 'framer-motion'
 import { Zap, Flame, Clock, Dumbbell, TrendingUp, ChevronRight, Activity } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
@@ -106,7 +107,7 @@ export default function Dashboard() {
   const recentWorkout = history[0]
 
   return (
-    <div className="p-8 relative">
+    <div className="p-8 relative page-enter">
       {/* Header */}
       <div className="mb-8">
         <p className="text-white/40 text-sm mb-1">
@@ -120,8 +121,13 @@ export default function Dashboard() {
       {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {stats.map((s) => (
-          <div key={s.label} className="glow-card shimmer rounded-2xl p-5 relative overflow-hidden"
-            style={{ borderColor: s.glow, boxShadow: `0 0 25px ${s.glow}` }}>
+          <motion.div 
+            key={s.label} 
+            whileHover={{ scale: 1.03, y: -4 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+            className="glow-card shimmer rounded-2xl p-5 relative overflow-hidden cursor-pointer"
+            style={{ borderColor: s.glow, boxShadow: `0 0 25px ${s.glow}` }}
+          >
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 ${s.bg}`}>
               <s.icon size={18} className={s.color} />
             </div>
@@ -131,40 +137,59 @@ export default function Dashboard() {
               <p className="text-2xl font-semibold">{s.value.toLocaleString()}{s.suffix}</p>
             )}
             <p className="text-sm text-white/40 mt-1">{s.label}</p>
-          </div>
+          </motion.div>
         ))}
       </div>
 
       {/* Quick actions */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-        <div onClick={() => navigate('/trainer')}
-          className="gradient-border cursor-pointer group p-6 rounded-2xl">
+        <motion.div 
+          onClick={() => navigate('/trainer')}
+          whileHover={{ scale: 1.02, y: -4 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+          className="gradient-border cursor-pointer group p-6 rounded-2xl"
+        >
           <div className="flex items-center justify-between">
             <div>
-              <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center mb-3">
-                <Zap size={20} className="text-green-400" />
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
+                style={{ 
+                  backgroundColor: 'rgba(var(--theme-primary-rgb), 0.1)', 
+                  color: 'var(--theme-primary)' 
+                }}>
+                <Zap size={20} />
               </div>
               <p className="font-semibold text-lg">Generate workout</p>
               <p className="text-white/40 text-sm mt-1">Get your adaptive plan now</p>
             </div>
-            <ChevronRight size={22} className="text-white/20 group-hover:translate-x-1 group-hover:text-green-400 transition-all" />
+            <ChevronRight size={22} className="text-white/20 group-hover:translate-x-1 transition-all" style={{ color: 'var(--theme-primary)' }} />
           </div>
-        </div>
+        </motion.div>
 
-        <div onClick={() => navigate('/bmi')}
+        <motion.div 
+          onClick={() => navigate('/bmi')}
+          whileHover={{ scale: 1.02, y: -4 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 20 }}
           className="glow-card rounded-2xl p-6 cursor-pointer group"
-          style={{ borderColor: 'rgba(168,85,247,0.2)', boxShadow: '0 0 25px rgba(168,85,247,0.05)' }}>
+          style={{ 
+            borderColor: 'rgba(var(--theme-secondary-rgb), 0.2)', 
+            boxShadow: '0 0 25px rgba(var(--theme-secondary-rgb), 0.05)' 
+          }}
+        >
           <div className="flex items-center justify-between">
             <div>
-              <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center mb-3">
-                <TrendingUp size={20} className="text-purple-400" />
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
+                style={{ 
+                  backgroundColor: 'rgba(var(--theme-secondary-rgb), 0.1)', 
+                  color: 'var(--theme-secondary)' 
+                }}>
+                <TrendingUp size={20} />
               </div>
               <p className="font-semibold text-lg">BMI Calculator</p>
               <p className="text-white/40 text-sm mt-1">Check your body metrics</p>
             </div>
-            <ChevronRight size={22} className="text-white/20 group-hover:translate-x-1 group-hover:text-purple-400 transition-all" />
+            <ChevronRight size={22} className="text-white/20 group-hover:translate-x-1 transition-all" style={{ color: 'var(--theme-secondary)' }} />
           </div>
-        </div>
+        </motion.div>
       </div>
 
       {/* Bottom row */}
@@ -174,15 +199,17 @@ export default function Dashboard() {
           <p className="text-sm text-white/40 mb-4">Weekly goal</p>
           <svg viewBox="0 0 120 120" width="120" height="120">
             <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="10" />
-            <circle cx="60" cy="60" r="50" fill="none" stroke="url(#ring-gradient)" strokeWidth="10"
+            <motion.circle cx="60" cy="60" r="50" fill="none" stroke="url(#ring-gradient)" strokeWidth="10"
               strokeDasharray="314"
-              strokeDashoffset={314 - (314 * weeklyPct / 100)}
+              initial={{ strokeDashoffset: 314 }}
+              animate={{ strokeDashoffset: 314 - (314 * weeklyPct / 100) }}
+              transition={{ duration: 1.5, ease: 'easeOut' }}
               strokeLinecap="round"
               transform="rotate(-90 60 60)" />
             <defs>
               <linearGradient id="ring-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#22c55e" />
-                <stop offset="100%" stopColor="#3b82f6" />
+                <stop offset="0%" stopColor="var(--theme-primary)" />
+                <stop offset="100%" stopColor="var(--theme-secondary)" />
               </linearGradient>
             </defs>
             <text x="60" y="56" textAnchor="middle" fill="white" fontSize="18" fontWeight="600">{weeklyPct}%</text>
@@ -194,7 +221,7 @@ export default function Dashboard() {
         {/* Recent workout */}
         <div className="glow-card rounded-2xl p-6">
           <div className="flex items-center gap-2 mb-3">
-            <Activity size={16} className="text-green-400" />
+            <Activity size={16} style={{ color: 'var(--theme-primary)' }} />
             <p className="text-sm font-medium text-white/60">Last workout</p>
           </div>
           {recentWorkout ? (
@@ -214,9 +241,10 @@ export default function Dashboard() {
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center h-20 text-center">
-              <p className="text-white/20 text-sm">No workouts yet!</p>
+              <p className="text-white/20 text-sm">No workouts logged yet!</p>
               <button onClick={() => navigate('/trainer')}
-                className="text-xs text-green-400 mt-2 hover:text-green-300 transition-colors">
+                className="text-xs mt-2 hover:opacity-80 transition-opacity"
+                style={{ color: 'var(--theme-primary)' }}>
                 Generate your first workout →
               </button>
             </div>

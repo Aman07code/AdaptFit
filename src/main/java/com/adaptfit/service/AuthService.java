@@ -8,11 +8,18 @@ import com.adaptfit.entity.User;
 import com.adaptfit.exception.BadRequestException;
 import com.adaptfit.exception.UnauthorizedException;
 import com.adaptfit.repository.UserRepository;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Random;
+import java.util.UUID;
 
 @Service
 public class AuthService {
@@ -34,14 +41,25 @@ public class AuthService {
             throw new BadRequestException("Email is already registered");
         }
 
+        // Generate a random 6-digit verification code
+        String otp = String.format("%06d", new Random().nextInt(1000000));
+
         User user = new User(
                 request.name().trim(),
                 email,
                 passwordEncoder.encode(request.password())
         );
+        user.setVerified(false);
+        user.setVerificationCode(otp);
 
         User savedUser = userRepository.save(user);
-        return new AuthResponse(jwtService.generateToken(savedUser), "Bearer", UserResponse.from(savedUser));
+
+        // Mock-print the OTP to the console for testing
+        System.out.println("==================================================");
+        System.out.println("[EMAIL VERIFICATION OTP] Code for " + email + " is: " + otp);
+        System.out.println("==================================================");
+
+        return new AuthResponse(null, null, UserResponse.from(savedUser), true);
     }
 
     @Transactional(readOnly = true)
@@ -53,7 +71,111 @@ public class AuthService {
             throw new UnauthorizedException("Invalid email or password");
         }
 
-        return new AuthResponse(jwtService.generateToken(user), "Bearer", UserResponse.from(user));
+        if (!user.isVerified()) {
+            throw new BadRequestException("Account is not verified. Please verify your email.");
+        }
+
+        return new AuthResponse(jwtService.generateToken(user), "Bearer", UserResponse.from(user), false);
+    }
+
+    @Transactional
+    public AuthResponse verify(String email, String code) {
+        User user = userRepository.findByEmail(normalizeEmail(email))
+                .orElseThrow(() -> new BadRequestException("User not found"));
+
+        if (user.isVerified()) {
+            return new AuthResponse(jwtService.generateToken(user), "Bearer", UserResponse.from(user), false);
+        }
+
+        if (user.getVerificationCode() == null || !user.getVerificationCode().equals(code.trim())) {
+            throw new BadRequestException("Invalid verification code");
+        }
+
+        user.setVerified(true);
+        user.setVerificationCode(null);
+        User savedUser = userRepository.save(user);
+
+        return new AuthResponse(jwtService.generateToken(savedUser), "Bearer", UserResponse.from(savedUser), false);
+    }
+
+    @Transactional
+    public void resendOtp(String email) {
+        User user = userRepository.findByEmail(normalizeEmail(email))
+                .orElseThrow(() -> new BadRequestException("User not found"));
+
+        if (user.isVerified()) {
+            throw new BadRequestException("Account is already verified");
+        }
+
+        String otp = String.format("%06d", new Random().nextInt(1000000));
+        user.setVerificationCode(otp);
+        userRepository.save(user);
+
+        System.out.println("==================================================");
+        System.out.println("[EMAIL VERIFICATION OTP RESEND] New code for " + email + " is: " + otp);
+        System.out.println("==================================================");
+    }
+
+    @Transactional
+    public AuthResponse authenticateGoogle(String credential) {
+        if (credential == null || credential.trim().isEmpty()) {
+            throw new BadRequestException("Google credential token is required");
+        }
+
+        try {
+            // Lightweight offline JWT payload decoder using Base64 & Jackson ObjectMapper
+            String[] parts = credential.split("\\.");
+            if (parts.length < 2) {
+                throw new BadRequestException("Invalid Google credential format");
+            }
+
+            byte[] decodedBytes = Base64.getUrlDecoder().decode(parts[1]);
+            String payloadJson = new String(decodedBytes, StandardCharsets.UTF_8);
+
+            ObjectMapper mapper = new ObjectMapper();
+            Map<String, Object> payload = mapper.readValue(payloadJson, new TypeReference<>() {});
+
+            String email = (String) payload.get("email");
+            String name = (String) payload.get("name");
+
+            if (email == null || email.trim().isEmpty()) {
+                throw new BadRequestException("Invalid token: email claim is missing");
+            }
+
+            String normalizedEmail = normalizeEmail(email);
+            User user = userRepository.findByEmail(normalizedEmail).orElse(null);
+
+            if (user != null) {
+                if (!user.isVerified()) {
+                    user.setVerified(true);
+                    user.setVerificationCode(null);
+                    user = userRepository.save(user);
+                }
+            } else {
+                // Auto-create a brand new verified account with a random secure password
+                String randomPassword = UUID.randomUUID().toString();
+                String displayName = (name != null && !name.trim().isEmpty()) ? name.trim() : email.split("@")[0];
+
+                user = new User(
+                        displayName,
+                        normalizedEmail,
+                        passwordEncoder.encode(randomPassword)
+                );
+                user.setVerified(true);
+                user.setVerificationCode(null);
+                user = userRepository.save(user);
+
+                System.out.println("[GOOGLE SOCIAL SIGN-IN] Registered new verified user: " + normalizedEmail);
+            }
+
+            String token = jwtService.generateToken(user);
+            return new AuthResponse(token, "Bearer", UserResponse.from(user), false);
+
+        } catch (BadRequestException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw new BadRequestException("Failed to decode Google identity token: " + ex.getMessage());
+        }
     }
 
     private String normalizeEmail(String email) {

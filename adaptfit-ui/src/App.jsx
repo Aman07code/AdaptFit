@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Routes, Route, NavLink, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { LayoutDashboard, Zap, Dumbbell, History, Calculator, User, LogOut } from 'lucide-react'
@@ -20,7 +20,7 @@ const navItems = [
   { to: '/account', icon: User, label: 'Account' },
 ]
 
-function AnimatedRoutes() {
+function AnimatedRoutes({ theme, setTheme }) {
   const location = useLocation()
   return (
     <AnimatePresence mode="wait">
@@ -33,12 +33,12 @@ function AnimatedRoutes() {
         style={{ height: '100%' }}
       >
         <Routes location={location}>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/trainer" element={<Trainer />} />
-          <Route path="/exercises" element={<Exercises />} />
-          <Route path="/history" element={<WorkoutHistory />} />
-          <Route path="/bmi" element={<BMICalculator />} />
-          <Route path="/account" element={<Account />} />
+          <Route path="/" element={<Dashboard theme={theme} />} />
+          <Route path="/trainer" element={<Trainer theme={theme} />} />
+          <Route path="/exercises" element={<Exercises theme={theme} />} />
+          <Route path="/history" element={<WorkoutHistory theme={theme} />} />
+          <Route path="/bmi" element={<BMICalculator theme={theme} />} />
+          <Route path="/account" element={<Account theme={theme} setTheme={setTheme} />} />
         </Routes>
       </motion.div>
     </AnimatePresence>
@@ -49,6 +49,13 @@ export default function App() {
   const [user, setUser] = useState(() => {
     try { return JSON.parse(localStorage.getItem('adaptfit_user')) } catch { return null }
   })
+
+  const [theme, setTheme] = useState(() => localStorage.getItem('adaptfit_theme') || 'emerald')
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    localStorage.setItem('adaptfit_theme', theme)
+  }, [theme])
 
   const handleAuth = (userData) => setUser(userData)
 
@@ -67,7 +74,7 @@ export default function App() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden" style={{ background: '#0a0a0a' }}>
+    <div className="flex h-screen overflow-hidden bg-theme-bg">
       {/* Sidebar */}
       <motion.aside
         initial={{ x: -280 }}
@@ -75,15 +82,14 @@ export default function App() {
         transition={{ type: 'spring', stiffness: 200, damping: 25 }}
         className="w-64 flex flex-col border-r border-white/5 relative z-10 glass"
       >
-        <div className="orb w-40 h-40 bg-green-500" style={{ top: '-30px', left: '-30px', opacity: 0.1 }} />
-        <div className="orb w-32 h-32 bg-blue-500" style={{ bottom: '80px', right: '-20px', opacity: 0.08 }} />
+        <div className="orb orb-primary w-40 h-40" style={{ top: '-30px', left: '-30px' }} />
+        <div className="orb orb-secondary w-32 h-32" style={{ bottom: '80px', right: '-20px' }} />
 
         {/* Logo */}
         <div className="p-6 border-b border-white/5 relative">
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
             className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center pulse-glow"
-              style={{ background: 'linear-gradient(135deg, #22c55e, #16a34a)' }}>
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center pulse-glow theme-gradient-primary-bg">
               <Zap size={16} className="text-black" />
             </div>
             <div>
@@ -97,8 +103,7 @@ export default function App() {
         <div className="px-4 pt-4 pb-2 relative">
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
             className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/3 border border-white/5">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold text-black"
-              style={{ background: 'linear-gradient(135deg, #22c55e, #16a34a)' }}>
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold text-black theme-gradient-primary-bg">
               {user.name?.charAt(0).toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
@@ -116,14 +121,14 @@ export default function App() {
               <NavLink to={to} end={to === '/'}
                 className={({ isActive }) =>
                   `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-200 ${isActive
-                    ? 'bg-green-500/10 text-green-400 font-medium border border-green-500/20'
+                    ? 'nav-link-active'
                     : 'text-white/40 hover:text-white hover:bg-white/5'}`
                 }>
                 {({ isActive }) => (
                   <>
-                    <Icon size={17} className={isActive ? 'text-green-400' : ''} />
+                    <Icon size={17} style={{ color: isActive ? 'var(--theme-primary)' : '' }} />
                     {label}
-                    {isActive && <motion.div layoutId="nav-dot" className="ml-auto w-1.5 h-1.5 rounded-full bg-green-400" />}
+                    {isActive && <motion.div layoutId="nav-dot" className="ml-auto w-1.5 h-1.5 rounded-full bg-theme-primary" />}
                   </>
                 )}
               </NavLink>
@@ -132,13 +137,9 @@ export default function App() {
         </nav>
 
         {/* Bottom */}
-        <div className="p-4 border-t border-white/5 relative space-y-2">
-          <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-green-500/5 border border-green-500/10">
-            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-            <span className="text-xs text-green-400/70">Backend connected</span>
-          </div>
+        <div className="p-4 border-t border-white/5 relative">
           <button onClick={handleLogout}
-            className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-white/30 hover:text-red-400 hover:bg-red-500/5 text-xs transition-all">
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-white/30 hover:text-red-400 hover:bg-red-500/5 text-xs transition-all border border-transparent hover:border-red-500/10">
             <LogOut size={14} /> Sign out
           </button>
         </div>
@@ -146,12 +147,12 @@ export default function App() {
 
       {/* Main */}
       <main className="flex-1 overflow-y-auto relative">
-        <div className="orb w-96 h-96 bg-green-500 fixed" style={{ top: '-100px', right: '-100px', opacity: 0.06 }} />
-        <div className="orb w-64 h-64 bg-purple-500 fixed" style={{ bottom: '0', left: '200px', opacity: 0.05 }} />
-        <div className="orb w-48 h-48 bg-blue-500 fixed" style={{ top: '40%', right: '20%', opacity: 0.05 }} />
-        <AnimatedRoutes />
+        <div className="orb orb-primary w-96 h-96 fixed" style={{ top: '-100px', right: '-100px' }} />
+        <div className="orb orb-secondary w-64 h-64 fixed" style={{ bottom: '0', left: '200px' }} />
+        <div className="orb orb-accent w-48 h-48 fixed" style={{ top: '40%', right: '20%' }} />
+        <AnimatedRoutes theme={theme} setTheme={setTheme} />
       </main>
-      <ChatBot />
+      <ChatBot theme={theme} />
     </div>
   )
 }

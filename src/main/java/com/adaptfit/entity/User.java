@@ -37,6 +37,12 @@ public class User {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
+    @Column(nullable = false, name = "is_verified")
+    private boolean isVerified = false;
+
+    @Column(name = "verification_code", length = 6)
+    private String verificationCode;
+
     @OneToMany(mappedBy = "user")
     private List<WorkoutHistory> workoutHistories = new ArrayList<>();
 
@@ -115,5 +121,21 @@ public class User {
 
     public void setWorkoutHistories(List<WorkoutHistory> workoutHistories) {
         this.workoutHistories = workoutHistories;
+    }
+
+    public boolean isVerified() {
+        return isVerified;
+    }
+
+    public void setVerified(boolean verified) {
+        isVerified = verified;
+    }
+
+    public String getVerificationCode() {
+        return verificationCode;
+    }
+
+    public void setVerificationCode(String verificationCode) {
+        this.verificationCode = verificationCode;
     }
 }
