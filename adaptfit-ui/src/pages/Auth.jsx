@@ -276,7 +276,7 @@ export default function Auth({ onAuth }) {
         body: JSON.stringify({ email: otpState.email }),
       })
       if (res.ok) {
-        setError('A new verification code was printed to the server console!')
+        setError('A new verification code was sent to your email (or printed to the server console)!')
         setOtpResendCooldown(30)
       } else {
         const data = await res.json()
@@ -355,7 +355,7 @@ export default function Auth({ onAuth }) {
 
             <h2 className="text-3xl font-bold text-white mb-2">Verify Email</h2>
             <p className="text-white/40 text-sm mb-8 leading-relaxed">
-              We generated a secure verification PIN and printed it to the server console. Check it out and verify <strong className="text-white">{otpState.email}</strong>.
+              We sent a secure verification PIN. Please check your email inbox (or check the server console if SMTP is disabled) and verify <strong className="text-white">{otpState.email}</strong>.
             </p>
 
             <div className="space-y-6">
