@@ -1,4 +1,3 @@
-USE adaptfit_db;
 
 INSERT INTO exercises
 (name, description, workout_type, equipment, muscle_group, duration_minutes, intensity, calories_estimate)
