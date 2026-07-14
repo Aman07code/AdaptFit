@@ -63,7 +63,7 @@ export default function ChatBot() {
     setLoading(true)
 
     try {
-      const API = localStorage.getItem('adaptfit_url') || 'http://localhost:8080'
+      const API = import.meta.env.VITE_API_URL || localStorage.getItem('adaptfit_url') || 'http://localhost:8080'
       const res = await fetch(`${API}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

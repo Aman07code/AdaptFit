@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { Zap, Flame, Clock, Dumbbell, TrendingUp, ChevronRight, Activity } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
-const API = localStorage.getItem('adaptfit_url') || 'http://localhost:8080'
+const API = import.meta.env.VITE_API_URL || localStorage.getItem('adaptfit_url') || 'http://localhost:8080'
 
 function useCountUp(target, duration = 1500) {
   const [count, setCount] = useState(0)

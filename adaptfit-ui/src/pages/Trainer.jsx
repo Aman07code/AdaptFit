@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Zap, Clock, Flame, Loader, AlertTriangle, Target, X, Play, Pause, Award, Smile, ClipboardList, CheckCircle2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
-const API = localStorage.getItem('adaptfit_url') || 'http://localhost:8080'
+const API = import.meta.env.VITE_API_URL || localStorage.getItem('adaptfit_url') || 'http://localhost:8080'
 const GOALS = ['FAT_LOSS', 'MUSCLE_GAIN', 'ENDURANCE', 'FLEXIBILITY', 'GENERAL_FITNESS']
 const EQUIPMENT = ['NONE', 'DUMBBELLS', 'JUMP_ROPE', 'RESISTANCE_BAND', 'KETTLEBELL']
 const MUSCLE_GROUPS = ['Chest', 'Back', 'Shoulders', 'Arms', 'Legs', 'Core', 'Full Body', 'Cardio']

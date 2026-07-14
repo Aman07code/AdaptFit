@@ -3,7 +3,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pi
 import { Clock, Flame, TrendingUp, Dumbbell, ChevronRight } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
-const API = localStorage.getItem('adaptfit_url') || 'http://localhost:8080'
+const API = import.meta.env.VITE_API_URL || localStorage.getItem('adaptfit_url') || 'http://localhost:8080'
 const COLORS = ['var(--theme-primary)', 'var(--theme-secondary)', 'var(--theme-accent)', '#f59e0b', '#ef4444']
 
 export default function WorkoutHistory() {

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { User, Link, LogOut, Check, Palette, Award, Bell, Trash2, Sliders, Info } from 'lucide-react'
 
-const API = localStorage.getItem('adaptfit_url') || 'http://localhost:8080'
+const API = import.meta.env.VITE_API_URL || localStorage.getItem('adaptfit_url') || 'http://localhost:8080'
 
 const THEMES = [
   { id: 'emerald', name: 'Emerald Aurora', colors: ['#22c55e', '#06b6d4', '#3b82f6'] },

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Search, Plus, Pencil, Trash2, X, Check } from 'lucide-react'
 
-const API = localStorage.getItem('adaptfit_url') || 'http://localhost:8080'
+const API = import.meta.env.VITE_API_URL || localStorage.getItem('adaptfit_url') || 'http://localhost:8080'
 const TYPES = ['ALL', 'LIGHT', 'STRENGTH', 'CARDIO', 'COMPACT', 'MOBILITY', 'MIXED']
 const INTENSITIES = ['ALL', 'LOW', 'MODERATE', 'HIGH']
 

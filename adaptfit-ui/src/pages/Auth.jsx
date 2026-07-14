@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Zap, Eye, EyeOff, User, Mail, Lock, ArrowRight } from 'lucide-react'
 
-const API = localStorage.getItem('adaptfit_url') || 'http://localhost:8080'
+const API = import.meta.env.VITE_API_URL || localStorage.getItem('adaptfit_url') || 'http://localhost:8080'
 
 export default function Auth({ onAuth }) {
   const [mode, setMode] = useState('login')
