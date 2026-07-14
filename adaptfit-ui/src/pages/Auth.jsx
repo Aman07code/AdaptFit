@@ -112,7 +112,7 @@ export default function Auth({ onAuth }) {
       try {
         if (window.google?.accounts?.id) {
           window.google.accounts.id.initialize({
-            client_id: '921102931089-devmockclientid.apps.googleusercontent.com',
+            client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID || '921102931089-devmockclientid.apps.googleusercontent.com',
             callback: handleGoogleCredentialResponse,
           })
 
