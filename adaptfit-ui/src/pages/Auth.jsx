@@ -625,55 +625,6 @@ export default function Auth({ onAuth }) {
                   )}
                 </button>
 
-                {/* Visual OR Divider */}
-                <div className="flex items-center my-4">
-                  <div className="flex-1 h-px bg-white/10" />
-                  <span className="px-3 text-xs text-white/25 uppercase tracking-widest font-semibold">Or</span>
-                  <div className="flex-1 h-px bg-white/10" />
-                </div>
-
-                {/* Google Login button */}
-                <div className="w-full flex flex-col items-center gap-3">
-                  {!googleInitialized && (
-                    <div 
-                      onDoubleClick={triggerMockGoogleLogin}
-                      className="w-full h-11 flex justify-center items-center overflow-hidden rounded-xl border border-white/10 bg-white/2 relative animate-pulse cursor-pointer"
-                      title="Double-click to simulate Google OAuth in local dev!"
-                    >
-                      <span className="text-xs text-white/30">Loading Google Sign-in...</span>
-                    </div>
-                  )}
-                  
-                  <div 
-                    ref={(el) => {
-                      if (el && window.google?.accounts?.id) {
-                        try {
-                          window.google.accounts.id.initialize({
-                            client_id: '921102931089-devmockclientid.apps.googleusercontent.com',
-                            callback: handleGoogleCredentialResponse,
-                          })
-                          window.google.accounts.id.renderButton(el, {
-                            theme: 'outline',
-                            size: 'large',
-                            width: 320,
-                            shape: 'pill',
-                          })
-                          if (!googleInitialized) {
-                            setGoogleInitialized(true)
-                          }
-                        } catch (err) {
-                          console.warn('Google GSI ref rendering error:', err)
-                        }
-                      }
-                    }}
-                    id="google-signin-btn" 
-                    onDoubleClick={triggerMockGoogleLogin}
-                    className="w-full h-11 flex justify-center items-center overflow-hidden rounded-xl relative cursor-pointer"
-                    style={{ display: googleInitialized ? 'flex' : 'none' }}
-                    title="Double-click to simulate Google OAuth in local dev!"
-                  />
-                </div>
-
                 <p className="text-center text-sm text-white/30 mt-6">
                   {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
                   <button 
