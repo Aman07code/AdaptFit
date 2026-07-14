@@ -10,6 +10,9 @@ import com.adaptfit.exception.UnauthorizedException;
 import com.adaptfit.repository.UserRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +26,9 @@ import java.util.UUID;
 
 @Service
 public class AuthService {
+
+    @Autowired(required = false)
+    private JavaMailSender mailSender;
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -54,10 +60,7 @@ public class AuthService {
 
         User savedUser = userRepository.save(user);
 
-        // Mock-print the OTP to the console for testing
-        System.out.println("==================================================");
-        System.out.println("[EMAIL VERIFICATION OTP] Code for " + email + " is: " + otp);
-        System.out.println("==================================================");
+        sendVerificationEmail(email, otp);
 
         return new AuthResponse(null, null, UserResponse.from(savedUser), true);
     }
@@ -111,9 +114,7 @@ public class AuthService {
         user.setVerificationCode(otp);
         userRepository.save(user);
 
-        System.out.println("==================================================");
-        System.out.println("[EMAIL VERIFICATION OTP RESEND] New code for " + email + " is: " + otp);
-        System.out.println("==================================================");
+        sendVerificationEmail(email, otp);
     }
 
     @Transactional
@@ -175,6 +176,27 @@ public class AuthService {
             throw ex;
         } catch (Exception ex) {
             throw new BadRequestException("Failed to decode Google identity token: " + ex.getMessage());
+        }
+    }
+
+    private void sendVerificationEmail(String email, String otp) {
+        if (mailSender == null) {
+            System.out.println("==================================================");
+            System.out.println("[EMAIL VERIFICATION OTP] Code for " + email + " is: " + otp);
+            System.out.println("==================================================");
+            return;
+        }
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom("AdaptFit <no-reply@adaptfit.com>");
+            message.setTo(email);
+            message.setSubject("Verify Your AdaptFit Account");
+            message.setText("Welcome to AdaptFit!\n\nYour email verification code is: " + otp + "\n\nUse this code to verify your identity and finalize your registration.");
+            mailSender.send(message);
+            System.out.println("[EMAIL SENT] Verification code successfully sent to " + email);
+        } catch (Exception e) {
+            System.err.println("[EMAIL ERROR] Failed to send verification email to " + email + ": " + e.getMessage());
+            System.out.println("[EMAIL FALLBACK] OTP Code is: " + otp);
         }
     }
 
