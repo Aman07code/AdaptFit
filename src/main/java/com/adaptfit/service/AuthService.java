@@ -47,22 +47,18 @@ public class AuthService {
             throw new BadRequestException("Email is already registered");
         }
 
-        // Generate a random 6-digit verification code
-        String otp = String.format("%06d", new Random().nextInt(1000000));
-
         User user = new User(
                 request.name().trim(),
                 email,
                 passwordEncoder.encode(request.password())
         );
-        user.setVerified(false);
-        user.setVerificationCode(otp);
+        user.setVerified(true);
+        user.setVerificationCode(null);
 
         User savedUser = userRepository.save(user);
 
-        sendVerificationEmail(email, otp);
-
-        return new AuthResponse(null, null, UserResponse.from(savedUser), true);
+        String token = jwtService.generateToken(savedUser);
+        return new AuthResponse(token, "Bearer", UserResponse.from(savedUser), false);
     }
 
     @Transactional(readOnly = true)
@@ -74,9 +70,6 @@ public class AuthService {
             throw new UnauthorizedException("Invalid email or password");
         }
 
-        if (!user.isVerified()) {
-            throw new BadRequestException("Account is not verified. Please verify your email.");
-        }
 
         return new AuthResponse(jwtService.generateToken(user), "Bearer", UserResponse.from(user), false);
     }
@@ -103,18 +96,7 @@ public class AuthService {
 
     @Transactional
     public void resendOtp(String email) {
-        User user = userRepository.findByEmail(normalizeEmail(email))
-                .orElseThrow(() -> new BadRequestException("User not found"));
-
-        if (user.isVerified()) {
-            throw new BadRequestException("Account is already verified");
-        }
-
-        String otp = String.format("%06d", new Random().nextInt(1000000));
-        user.setVerificationCode(otp);
-        userRepository.save(user);
-
-        sendVerificationEmail(email, otp);
+        System.out.println("[SMTP DISABLED] Resend OTP requested for " + email + " - ignoring since verification is disabled.");
     }
 
     @Transactional
