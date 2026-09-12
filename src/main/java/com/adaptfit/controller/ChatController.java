@@ -48,7 +48,7 @@ public class ChatController {
             messages.add(userMsg);
 
             Map<String, Object> groqRequest = new HashMap<>();
-            groqRequest.put("model", "llama-3.3-70b-versatile");
+            groqRequest.put("model", "groq/compound");
             groqRequest.put("messages", messages);
             groqRequest.put("max_tokens", 300);
             groqRequest.put("temperature", 0.7);
@@ -75,9 +75,9 @@ public class ChatController {
                 response.put("reply", "⚠️ The AI Chatbot API key is expired or missing. Please generate a free key at https://console.groq.com/keys and update `GROQ_API_KEY` on Render!");
                 return ResponseEntity.ok(response);
             } catch (Exception e) {
-                // Try fallback model llama-3.1-8b-instant
+                // Try fallback model groq/compound-mini
                 try {
-                    groqRequest.put("model", "llama-3.1-8b-instant");
+                    groqRequest.put("model", "groq/compound-mini");
                     HttpEntity<Map<String, Object>> fallbackEntity = new HttpEntity<>(groqRequest, headers);
                     ResponseEntity<Map> fallbackResponse = restTemplate.postForEntity(
                         "https://api.groq.com/openai/v1/chat/completions",
