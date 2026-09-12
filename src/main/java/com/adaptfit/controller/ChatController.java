@@ -55,25 +55,54 @@ public class ChatController {
 
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(groqRequest, headers);
 
-            ResponseEntity<Map> groqResponse = restTemplate.postForEntity(
-                "https://api.groq.com/openai/v1/chat/completions",
-                entity,
-                Map.class
-            );
+            try {
+                ResponseEntity<Map> groqResponse = restTemplate.postForEntity(
+                    "https://api.groq.com/openai/v1/chat/completions",
+                    entity,
+                    Map.class
+                );
 
-            Map<String, Object> body = groqResponse.getBody();
-            List<Map<String, Object>> choices = (List<Map<String, Object>>) body.get("choices");
-            Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
-            String reply = (String) message.get("content");
+                Map<String, Object> body = groqResponse.getBody();
+                List<Map<String, Object>> choices = (List<Map<String, Object>>) body.get("choices");
+                Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
+                String reply = (String) message.get("content");
 
-            Map<String, String> response = new HashMap<>();
-            response.put("reply", reply);
-            return ResponseEntity.ok(response);
+                Map<String, String> response = new HashMap<>();
+                response.put("reply", reply);
+                return ResponseEntity.ok(response);
+            } catch (org.springframework.web.client.HttpClientErrorException.Unauthorized e) {
+                Map<String, String> response = new HashMap<>();
+                response.put("reply", "⚠️ The AI Chatbot API key is expired or missing. Please generate a free key at https://console.groq.com/keys and update `GROQ_API_KEY` on Render!");
+                return ResponseEntity.ok(response);
+            } catch (Exception e) {
+                // Try fallback model llama-3.1-8b-instant
+                try {
+                    groqRequest.put("model", "llama-3.1-8b-instant");
+                    HttpEntity<Map<String, Object>> fallbackEntity = new HttpEntity<>(groqRequest, headers);
+                    ResponseEntity<Map> fallbackResponse = restTemplate.postForEntity(
+                        "https://api.groq.com/openai/v1/chat/completions",
+                        fallbackEntity,
+                        Map.class
+                    );
+                    Map<String, Object> body = fallbackResponse.getBody();
+                    List<Map<String, Object>> choices = (List<Map<String, Object>>) body.get("choices");
+                    Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
+                    String reply = (String) message.get("content");
+
+                    Map<String, String> response = new HashMap<>();
+                    response.put("reply", reply);
+                    return ResponseEntity.ok(response);
+                } catch (Exception fallbackErr) {
+                    Map<String, String> response = new HashMap<>();
+                    response.put("reply", "⚠️ Groq API Error: " + e.getMessage() + ". Please check your GROQ_API_KEY environment variable on Render.");
+                    return ResponseEntity.ok(response);
+                }
+            }
 
         } catch (Exception e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("error", e.getMessage());
-            return ResponseEntity.status(500).body(error);
+            Map<String, String> response = new HashMap<>();
+            response.put("reply", "⚠️ Unable to process chat request: " + e.getMessage());
+            return ResponseEntity.ok(response);
         }
     }
 }
