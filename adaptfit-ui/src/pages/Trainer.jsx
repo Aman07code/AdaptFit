@@ -224,12 +224,16 @@ export default function Trainer() {
     setLoading(true); setError(''); setResult(null)
     try {
       const token = localStorage.getItem('adaptfit_token')
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 25000)
+
       const res = await fetch(`${API}/api/recommendations/workouts`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {})
         },
+        signal: controller.signal,
         body: JSON.stringify({
           energyLevel: energy,
           recoveryLevel: recovery,
@@ -240,11 +244,16 @@ export default function Trainer() {
           targetMuscleGroups: targetMuscles
         })
       })
+      clearTimeout(timeoutId)
       const data = await res.json()
       if (data.message) setError(data.message)
       else setResult(data)
     } catch (e) {
-      setError('Could not connect to backend. Make sure it is running.')
+      const isTimeout = e.name === 'AbortError'
+      setError(isTimeout
+        ? '⏳ Connection timed out. The Render backend server or Aiven database is sleeping. Please ensure your Aiven database is running at console.aiven.io and try again!'
+        : 'Could not connect to backend. Make sure it is running.'
+      )
     }
     setLoading(false)
   }

@@ -64,9 +64,13 @@ export default function ChatBot() {
 
     try {
       const API = import.meta.env.VITE_API_URL || localStorage.getItem('adaptfit_url') || 'http://localhost:8080'
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 25000)
+
       const res = await fetch(`${API}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
         body: JSON.stringify({
           message: userMessage,
           userName: user?.name || 'User',
@@ -76,15 +80,19 @@ export default function ChatBot() {
           }))
         })
       })
+      clearTimeout(timeoutId)
       const data = await res.json()
       setMessages(prev => [...prev, {
         role: 'assistant',
         content: data.reply || "Sorry, I couldn't get a response!"
       }])
     } catch (e) {
+      const isTimeout = e.name === 'AbortError'
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: '⚠️ Could not connect to backend. Make sure it is running!'
+        content: isTimeout 
+          ? '⏳ Connection timed out. The Render backend server or Aiven database is sleeping. Please check console.aiven.io to ensure MySQL is running, then try again!' 
+          : '⚠️ Could not connect to backend. Make sure the server is running!'
       }])
     }
     setLoading(false)
