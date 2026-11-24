@@ -1,0 +1,6 @@
+.git
+.gitignore
+adaptfit-ui
+target
+*.md
+sql

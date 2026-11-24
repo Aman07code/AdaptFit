@@ -1,10 +1,13 @@
 # Build stage
-FROM maven:3.8.5-openjdk-17 AS build
-COPY . .
+FROM maven:3.9-eclipse-temurin-17 AS build
+WORKDIR /app
+COPY pom.xml .
+COPY src ./src
 RUN mvn clean package -DskipTests
 
 # Run stage
-FROM eclipse-temurin:17-jdk
-COPY --from=build /target/adaptfit-0.0.1-SNAPSHOT.jar adaptfit.jar
+FROM eclipse-temurin:17-jre
+WORKDIR /app
+COPY --from=build /app/target/adaptfit-0.0.1-SNAPSHOT.jar app.jar
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "adaptfit.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]
